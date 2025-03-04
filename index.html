@@ -3,23 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clientes Morosos</title>
+  <title>Clientes Morosos con Geolocalización</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Pantalla de Login -->
-  <div id="login" class="pantalla activo">
-    <h2>Iniciar Sesión</h2>
-    <form id="loginForm">
-      <input type="text" id="usuario" placeholder="Usuario" required>
-      <input type="password" id="contrasena" placeholder="Contraseña" required>
-      <button type="submit">Ingresar</button>
-    </form>
-  </div>
-
   <!-- Pantalla de Inicio -->
-  <div id="inicio" class="pantalla">
+  <div id="inicio" class="pantalla activo">
     <h2>Sistema de Clientes Morosos</h2>
     <button onclick="cambiarPantalla('registro')">Registrar Cliente</button>
     <button onclick="cambiarPantalla('lista')">Ver Lista de Clientes</button>
@@ -34,9 +24,11 @@
       <input type="text" id="direccion" placeholder="Dirección" required>
       <div class="ubicacion-container">
         <input type="text" id="ubicacion" placeholder="Coordenadas GPS" readonly required>
-        <button type="button" onclick="obtenerUbicacion()">Obtener Ubicación</button>
+        <button type="button" class="btn-ubicacion" onclick="obtenerUbicacion()">Obtener Ubicación</button>
       </div>
       <input type="tel" id="telefono" placeholder="Teléfono" required>
+      <input type="file" id="fotos" multiple accept="image/*">
+      <div id="preview"></div>
       <button type="submit">Guardar Cliente</button>
     </form>
     <button onclick="cambiarPantalla('inicio')">Volver</button>
@@ -45,12 +37,19 @@
   <!-- Pantalla de Lista de Clientes -->
   <div id="lista" class="pantalla">
     <h2>Lista de Clientes Morosos</h2>
+    <input type="text" id="buscarCliente" placeholder="Buscar cliente..." onkeyup="buscarClientes()">
     <div id="listaClientes"></div>
     <button onclick="cambiarPantalla('inicio')">Volver</button>
   </div>
 
-  <!-- Agregar Firebase -->
-  <script type="module" src="script.js"></script>
+  <!-- Pantalla de Detalles del Cliente -->
+  <div id="detalles" class="pantalla">
+    <h2>Detalles del Cliente</h2>
+    <div id="detalleCliente"></div>
+    <button onclick="cambiarPantalla('lista')">Volver</button>
+  </div>
 
+  <!-- Cargar el script al final del body -->
+  <script src="script.js"></script>
 </body>
 </html>
