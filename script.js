@@ -1,4 +1,19 @@
+const USUARIO_ADMIN = "admin";
+const CLAVE_ADMIN = "7531";
+
 document.addEventListener("DOMContentLoaded", function() {
+    // Inicializa la sesión al cargar la página
+    if (estaLogueado()) {
+        cambiarPantalla('inicio'); // Si ya está logueado, muestra la pantalla de inicio
+    } else {
+        cambiarPantalla('login'); // Si no, muestra la pantalla de login
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        iniciarSesion();
+    });
+
     document.getElementById('clienteForm').addEventListener('submit', function(event) {
         event.preventDefault();
         guardarCliente();
@@ -25,9 +40,64 @@ document.addEventListener("DOMContentLoaded", function() {
     cargarClientes();
 });
 
+function iniciarSesion() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    if (username === USUARIO_ADMIN && password === CLAVE_ADMIN) {
+        // Credenciales válidas
+        localStorage.setItem('sesionActiva', 'true');
+        Swal.fire({
+            icon: 'success',
+            title: 'Inicio de sesión exitoso',
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            cambiarPantalla('inicio');
+        });
+    } else {
+        // Credenciales inválidas
+        Swal.fire({
+            icon: 'error',
+            title: 'Credenciales incorrectas',
+            text: 'Por favor, verifica tu usuario y contraseña.'
+        });
+    }
+}
+
+function cerrarSesion() {
+    localStorage.removeItem('sesionActiva');
+    Swal.fire({
+        icon: 'info',
+        title: 'Sesión cerrada',
+        timer: 1500,
+        showConfirmButton: false
+    }).then(() => {
+        cambiarPantalla('login');
+    });
+}
+
+function estaLogueado() {
+    return localStorage.getItem('sesionActiva') === 'true';
+}
+
+
 function cambiarPantalla(pantalla) {
-    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activo'));
+    const pantallas = document.querySelectorAll('.pantalla');
+    pantallas.forEach(p => p.classList.remove('activo'));
     document.getElementById(pantalla).classList.add('activo');
+
+    // Evita acceder a las pantallas protegidas sin estar logueado
+    if (pantalla !== 'login' && pantalla !== 'inicio' && !estaLogueado()) {
+      Swal.fire({
+          icon: 'warning',
+          title: 'Acceso denegado',
+          text: 'Por favor, inicia sesión para acceder a esta sección.'
+      }).then(() => {
+          cambiarPantalla('login');
+      });
+        return;
+    }
 
     if (pantalla === 'lista') {
         cargarClientes();
@@ -36,7 +106,11 @@ function cambiarPantalla(pantalla) {
 
 function obtenerUbicacion() {
     if (!navigator.geolocation) {
-        alert('La geolocalización no es soportada por tu navegador');
+       Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La geolocalización no es soportada por tu navegador',
+        });
         return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -44,10 +118,36 @@ function obtenerUbicacion() {
             const coords = position.coords;
             document.getElementById('ubicacion').value =
                 `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
-            alert('Ubicación obtenida correctamente');
+           Swal.fire({
+                icon: 'success',
+                title: 'Ubicación obtenida',
+                text: 'Ubicación obtenida correctamente',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
         },
         (error) => {
-            alert(`Error al obtener ubicación: ${error.message}`);
+            let errorMessage = "Error al obtener la ubicación.";
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = "Permiso denegado para acceder a la ubicación.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = "La información de ubicación no está disponible.";
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = "Tiempo de espera agotado para obtener la ubicación.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    errorMessage = "Ocurrió un error desconocido al obtener la ubicación.";
+                    break;
+            }
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de geolocalización',
+                text: errorMessage,
+            });
         }
     );
 }
@@ -62,7 +162,30 @@ function guardarCliente() {
     const fotos = [];
 
     if (!nombre || !cedula || !direccion || !ubicacion || !telefono) {
-        alert('Por favor, completa todos los campos.');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Campos incompletos',
+            text: 'Por favor, completa todos los campos.',
+        });
+        return;
+    }
+
+    // Simple validation for cedula and telefono (you can improve these)
+    if (!/^\d+$/.test(cedula)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cédula inválida',
+            text: 'Por favor, introduce una cédula válida (solo números).',
+        });
+        return;
+    }
+
+    if (!/^\d+$/.test(telefono)) {
+       Swal.fire({
+            icon: 'warning',
+            title: 'Teléfono inválido',
+            text: 'Por favor, introduce un teléfono válido (solo números).',
+        });
         return;
     }
 
@@ -89,7 +212,13 @@ function guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fot
     clientes.push(clienteData);
     localStorage.setItem('clientes', JSON.stringify(clientes));
 
-    alert('Cliente registrado con éxito.');
+    Swal.fire({
+        icon: 'success',
+        title: 'Cliente registrado',
+        text: 'Cliente registrado con éxito.',
+        timer: 1500,
+        showConfirmButton: false
+    });
     document.getElementById('clienteForm').reset();
     document.getElementById('preview').innerHTML = '';
     cargarClientes();
@@ -201,9 +330,25 @@ function editarCliente(index) {
 
 function eliminarCliente(index) {
     let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
-    if (confirm(`¿Eliminar a "${clientes[index].nombre}"?`)) {
-        clientes.splice(index, 1);
-        localStorage.setItem('clientes', JSON.stringify(clientes));
-        cargarClientes();
-    }
-}
+   Swal.fire({
+        title: '¿Estás seguro?',
+        text: `¿Eliminar a "${clientes[index].nombre}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminar!',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            clientes.splice(index, 1);
+            localStorage.setItem('clientes', JSON.stringify(clientes));
+            cargarClientes();
+            Swal.fire(
+                'Eliminado!',
+                'El cliente ha sido eliminado.',
+                'success'
+            );
+        }
+    });
+        }
