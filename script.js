@@ -3,7 +3,6 @@ const USUARIO_CORRECTO = "admin";
 const CONTRASENA_CORRECTA = "1234";
 
 document.addEventListener("DOMContentLoaded", function() {
-    // Verificar si ya está autenticado
     if (sessionStorage.getItem("usuarioAutenticado") === "true") {
         cambiarPantalla("inicio");
     }
@@ -17,18 +16,22 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (usuario === USUARIO_CORRECTO && contrasena === CONTRASENA_CORRECTA) {
             alert("Inicio de sesión exitoso");
-            sessionStorage.setItem("usuarioAutenticado", "true"); // Guardar sesión
-            cambiarPantalla("inicio"); // Ir a la pantalla de inicio
+            sessionStorage.setItem("usuarioAutenticado", "true");
+            cambiarPantalla("inicio");
         } else {
             alert("Usuario o contraseña incorrectos. Inténtalo de nuevo.");
         }
     });
 });
 
-// Función para cambiar de pantalla correctamente
+// Función para cambiar de pantalla y actualizar lista de clientes
 function cambiarPantalla(pantalla) {
     document.querySelectorAll(".pantalla").forEach(p => p.classList.remove("activo"));
     document.getElementById(pantalla).classList.add("activo");
+
+    if (pantalla === "lista") {
+        cargarClientes(); // Cargar clientes al abrir la lista
+    }
 }
 
 // Función para obtener la ubicación
@@ -69,7 +72,7 @@ function obtenerUbicacion() {
     );
 }
 
-// Guardar cliente en Firestore
+// Guardar cliente en Firestore y actualizar lista
 function guardarCliente() {
     const nombre = document.getElementById("nombre").value.trim();
     const cedula = document.getElementById("cedula").value.trim();
@@ -92,20 +95,22 @@ function guardarCliente() {
     .then(() => {
         alert("Cliente registrado con éxito.");
         document.getElementById("clienteForm").reset();
-        cargarClientes();
-        cambiarPantalla("lista");
+        cambiarPantalla("lista"); // Ir a la lista automáticamente
+        cargarClientes(); // Recargar lista de clientes
     })
     .catch(error => {
         console.error("Error al registrar cliente:", error);
     });
 }
 
-// Cargar clientes desde Firestore
+// Cargar clientes desde Firestore y mostrarlos en la lista
 function cargarClientes() {
     const listaClientes = document.getElementById("listaClientes");
-    listaClientes.innerHTML = "";
+    listaClientes.innerHTML = "<p>Cargando clientes...</p>";
 
     db.collection("clientes").get().then((querySnapshot) => {
+        listaClientes.innerHTML = ""; // Limpiar lista antes de agregar clientes
+
         if (querySnapshot.empty) {
             listaClientes.innerHTML = "<p>No hay clientes registrados.</p>";
         } else {
@@ -123,6 +128,9 @@ function cargarClientes() {
                 listaClientes.appendChild(divCliente);
             });
         }
+    }).catch(error => {
+        console.error("Error al cargar clientes:", error);
+        listaClientes.innerHTML = "<p>Error al cargar los clientes.</p>";
     });
 }
 
@@ -143,7 +151,7 @@ function verDetalles(id) {
     db.collection("clientes").doc(id).get().then(doc => {
         if (doc.exists) {
             const cliente = doc.data();
-            alert(`Detalles:\nNombre: ${cliente.nombre}\nCédula: ${cliente.cedula}`);
+            alert(`Detalles:\nNombre: ${cliente.nombre}\nCédula: ${cliente.cedula}\nDirección: ${cliente.direccion}\nUbicación: ${cliente.ubicacion}\nTeléfono: ${cliente.telefono}`);
         } else {
             alert("Cliente no encontrado.");
         }
