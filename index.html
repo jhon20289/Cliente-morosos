@@ -8,8 +8,18 @@
 </head>
 <body>
 
+  <!-- Pantalla de Login -->
+  <div id="login" class="pantalla activo">
+    <h2>Iniciar Sesión</h2>
+    <form id="loginForm">
+      <input type="text" id="usuario" placeholder="Usuario" required>
+      <input type="password" id="contrasena" placeholder="Contraseña" required>
+      <button type="submit">Ingresar</button>
+    </form>
+  </div>
+
   <!-- Pantalla de Inicio -->
-  <div id="inicio" class="pantalla activo">
+  <div id="inicio" class="pantalla">
     <h2>Sistema de Clientes Morosos</h2>
     <button onclick="cambiarPantalla('registro')">Registrar Cliente</button>
     <button onclick="cambiarPantalla('lista')">Ver Lista de Clientes</button>
