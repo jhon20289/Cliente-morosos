@@ -1,0 +1,100 @@
+body {
+  font-family: Arial, sans-serif;
+  max-width: 400px;
+  margin: auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.pantalla {
+  display: none;
+}
+
+.activo {
+  display: block;
+}
+
+input, button {
+  padding: 10px;
+  font-size: 16px;
+  margin: 5px;
+  width: 90%;
+}
+
+button {
+  background-color: blue;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: darkblue;
+}
+
+.cliente {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Botones de acción */
+.btn-detalles {
+  background-color: green;
+}
+
+.btn-editar {
+  background-color: orange;
+  margin: 0 5px;
+}
+
+.btn-eliminar {
+  background-color: red;
+}
+
+/* Botones de acción más pequeños */
+.btn-detalles, .btn-editar, .btn-eliminar {
+  font-size: 12px;
+  padding: 5px 8px;
+}
+
+.imagen-preview {
+  max-width: 150px;
+  height: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin: 5px;
+}
+
+#preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.ubicacion-container {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+#ubicacion {
+  flex: 1;
+}
+
+.btn-ubicacion {
+  background-color: #4CAF50;
+  padding: 10px;
+  white-space: nowrap;
+}
+
+.mapa-link {
+  color: blue;
+  text-decoration: underline;
+  margin-top: 5px;
+  display: inline-block;
+}
