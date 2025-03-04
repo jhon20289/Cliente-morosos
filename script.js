@@ -64,13 +64,33 @@ function guardarCliente() {
     const direccion = document.getElementById('direccion').value.trim();
     const ubicacion = document.getElementById('ubicacion').value.trim();
     const telefono = document.getElementById('telefono').value.trim();
+    const fotosInput = document.getElementById('fotos');
+    const fotos = [];
 
     if (!nombre || !cedula || !direccion || !ubicacion || !telefono) {
         alert('Por favor, completa todos los campos.');
         return;
     }
 
-    const clienteData = { nombre, cedula, direccion, ubicacion, telefono };
+    // Guardar las imágenes como URLs base64
+    if (fotosInput.files && fotosInput.files.length > 0) {
+        Array.from(fotosInput.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fotos.push(e.target.result); // Guardar la imagen como base64
+                if (fotos.length === fotosInput.files.length) {
+                    guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fotos);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    } else {
+        guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fotos);
+    }
+}
+
+function guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fotos) {
+    const clienteData = { nombre, cedula, direccion, ubicacion, telefono, fotos };
 
     let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
     clientes.push(clienteData);
@@ -78,8 +98,7 @@ function guardarCliente() {
 
     alert('Cliente registrado con éxito.');
     document.getElementById('clienteForm').reset();
-    // Limpiar la vista previa de imágenes si hubiera
-    document.getElementById('preview').innerHTML = '';
+    document.getElementById('preview').innerHTML = ''; // Limpiar vista previa de imágenes
     cargarClientes();
     cambiarPantalla('lista');
 }
@@ -155,9 +174,24 @@ function verDetalles(index) {
         <strong>Nombre:</strong> ${cliente.nombre}<br>
         <strong>Cédula:</strong> ${cliente.cedula}<br>
         <strong>Dirección:</strong> ${cliente.direccion}<br>
-        <strong>Ubicación:</strong> ${cliente.ubicacion}<br>
+        <strong>Ubicación:</strong> <a class="mapa-link" href="https://www.google.com/maps?q=${cliente.ubicacion}" target="_blank">Ver en mapa (${cliente.ubicacion})</a><br>
         <strong>Teléfono:</strong> ${cliente.telefono}<br>
+        <strong>Fotos:</strong><br>
+        <div id="fotosCliente"></div>
     `;
+
+    // Mostrar las imágenes
+    const fotosCliente = document.getElementById('fotosCliente');
+    if (cliente.fotos && cliente.fotos.length > 0) {
+        cliente.fotos.forEach(foto => {
+            const img = document.createElement('img');
+            img.src = foto;
+            img.classList.add('imagen-preview');
+            fotosCliente.appendChild(img);
+        });
+    } else {
+        fotosCliente.innerHTML = '<p>No hay fotos registradas.</p>';
+    }
 
     cambiarPantalla('detalles');
 }
