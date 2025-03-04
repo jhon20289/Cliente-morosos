@@ -1,29 +1,49 @@
-body {
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   font-family: Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* Diseño de pantallas */
+.pantalla {
+  display: none;
+  width: 90%;
   max-width: 400px;
-  margin: auto;
+  background: white;
   padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
-.pantalla {
-  display: none;
-}
-
-.activo {
+.pantalla.activo {
   display: block;
 }
 
+/* Estilo para los inputs y botones */
 input, button {
+  width: 100%;
   padding: 10px;
-  font-size: 16px;
-  margin: 5px;
-  width: 90%;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 button {
   background-color: blue;
   color: white;
+  font-weight: bold;
   border: none;
   cursor: pointer;
 }
@@ -32,76 +52,36 @@ button:hover {
   background-color: darkblue;
 }
 
-.cliente {
-  border: 1px solid #ddd;
-  padding: 10px;
+/* Estilo especial para lista de clientes */
+#listaClientes {
+  text-align: left;
   margin-top: 10px;
+}
+
+.cliente {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* Botones de acción */
 .btn-detalles {
-  background-color: green;
+  background: #ff9800;
 }
 
-.btn-editar {
-  background-color: orange;
-  margin: 0 5px;
+.btn-detalles:hover {
+  background: #e68900;
 }
 
-.btn-eliminar {
-  background-color: red;
-}
-
-/* Botones de acción más pequeños */
-.btn-detalles, .btn-editar, .btn-eliminar {
-  font-size: 12px;
-  padding: 5px 8px;
-}
-
-.imagen-preview {
-  max-width: 150px;
-  height: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin: 5px;
-}
-
-#preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 10px 0;
-}
-
+/* Estilo para la sección de ubicación */
 .ubicacion-container {
   display: flex;
-  gap: 5px;
   align-items: center;
 }
 
-#ubicacion {
-  flex: 1;
-}
-
-.btn-ubicacion {
-  background-color: #4CAF50;
-  padding: 10px;
-  white-space: nowrap;
-}
-
-.mapa-link {
-  color: blue;
-  text-decoration: underline;
-  margin-top: 5px;
-  display: inline-block;
-}
-
-#fotosCliente {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 10px 0;
+.ubicacion-container button {
+  margin-left: 5px;
+  padding: 5px;
+  font-size: 12px;
 }
