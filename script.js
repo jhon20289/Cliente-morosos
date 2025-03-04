@@ -1,6 +1,23 @@
+// Datos de autenticación (usuario y contraseña)
+const USUARIO_CORRECTO = "admin";
+const CONTRASENA_CORRECTA = "1234";
+
 // Ejecutar el script solo cuando el DOM esté completamente cargado
 document.addEventListener("DOMContentLoaded", function() {
-    // Evento para el envío del formulario
+    // Evento para el login
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const usuario = document.getElementById('usuario').value.trim();
+        const contrasena = document.getElementById('contrasena').value.trim();
+
+        if (usuario === USUARIO_CORRECTO && contrasena === CONTRASENA_CORRECTA) {
+            cambiarPantalla('inicio');
+        } else {
+            alert('Usuario o contraseña incorrectos.');
+        }
+    });
+
+    // Evento para el envío del formulario de cliente
     document.getElementById('clienteForm').addEventListener('submit', function(event) {
         event.preventDefault();
         guardarCliente();
@@ -216,10 +233,17 @@ function editarCliente(index) {
 
 // Eliminar cliente
 function eliminarCliente(index) {
-    let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
-    if (confirm(`¿Eliminar a "${clientes[index].nombre}"?`)) {
-        clientes.splice(index, 1);
-        localStorage.setItem('clientes', JSON.stringify(clientes));
-        cargarClientes();
+    const usuario = prompt("Ingrese su usuario:");
+    const contrasena = prompt("Ingrese su contraseña:");
+
+    if (usuario === USUARIO_CORRECTO && contrasena === CONTRASENA_CORRECTA) {
+        let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+        if (confirm(`¿Eliminar a "${clientes[index].nombre}"?`)) {
+            clientes.splice(index, 1);
+            localStorage.setItem('clientes', JSON.stringify(clientes));
+            cargarClientes();
+        }
+    } else {
+        alert('Usuario o contraseña incorrectos. No se puede eliminar el cliente.');
     }
 }
