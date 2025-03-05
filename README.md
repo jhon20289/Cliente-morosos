@@ -1,4 +1,3 @@
-
 # Cliente-morosos
 
 Este proyecto es una aplicación para gestionar y visualizar clientes morosos.
