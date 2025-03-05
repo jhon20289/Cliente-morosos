@@ -1,1 +1,6 @@
+Tu archivo `.gitignore` debería contener al menos lo siguiente:
 
+```
+node_modules/
+.env
+```
