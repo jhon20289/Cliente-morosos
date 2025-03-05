@@ -241,7 +241,7 @@ function cargarClientes() {
                 <div>
                     <button class="btn-detalles" onclick="verDetalles(${index})">Detalles</button>
                     <button class="btn-editar" onclick="editarCliente(${index})">Editar</button>
-                    <button class="btn-eliminar" onclick="eliminarCliente(${index})">Eliminar</button>
+                    <button class="btn-eliminar" onclick="confirmarEliminarCliente(${index})">Eliminar</button>
                 </div>
             `;
             listaClientes.appendChild(divCliente);
@@ -274,7 +274,7 @@ function buscarClientes() {
                 <div>
                     <button class="btn-detalles" onclick="verDetalles(${originalIndex})">Detalles</button>
                     <button class="btn-editar" onclick="editarCliente(${originalIndex})">Editar</button>
-                    <button class="btn-eliminar" onclick="eliminarCliente(${originalIndex})">Eliminar</button>
+                    <button class="btn-eliminar" onclick="confirmarEliminarCliente(${originalIndex})">Eliminar</button>
                 </div>
             `;
             listaClientes.appendChild(divCliente);
@@ -328,6 +328,40 @@ function editarCliente(index) {
     cambiarPantalla('registro');
 }
 
+function confirmarEliminarCliente(index) {
+  Swal.fire({
+    title: 'Confirmar Eliminación',
+    text: 'Ingrese usuario y contraseña de administrador para confirmar:',
+    html:
+      `<input id="swal-input1" class="swal2-input" placeholder="Usuario">` +
+      `<input id="swal-input2" class="swal2-input" type="password" placeholder="Contraseña">`,
+    focusConfirm: false,
+    preConfirm: () => {
+      const username = document.getElementById('swal-input1').value;
+      const password = document.getElementById('swal-input2').value;
+      if (!username || !password) {
+        Swal.showValidationMessage(`Por favor, ingrese usuario y contraseña.`);
+      }
+      return { username: username, password: password };
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const username = result.value.username;
+      const password = result.value.password;
+
+      if (username === USUARIO_ADMIN && password === CLAVE_ADMIN) {
+        eliminarCliente(index);
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Credenciales de administrador incorrectas.'
+        });
+      }
+    }
+  });
+}
+
 function eliminarCliente(index) {
     let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
    Swal.fire({
@@ -351,4 +385,4 @@ function eliminarCliente(index) {
             );
         }
     });
-        }
+}
