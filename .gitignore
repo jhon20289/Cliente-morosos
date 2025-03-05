@@ -1,6 +1,79 @@
-Tu archivo `.gitignore` debería contener al menos lo siguiente:
-
-```
+# Node.js
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+
+# Environment variables (¡MUY IMPORTANTE!)
 .env
-```
+.env.*
+!/.env.example
+
+# Build artifacts (dependiendo de tu configuración)
+dist/
+build/
+public/uploads/  # Si tienes una carpeta de subidas que no quieres rastrear
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp  # Vim swap files
+*.swo
+
+# macOS
+.DS_Store
+
+# Log files
+*.log
+
+# Dependency directories (e.g., for Python)
+env/
+venv/
+.venv/
+
+# Temporary files
+*~
+\#*#
+.*.swp
+.DS_Store
+
+# Secret keys (¡MUY IMPORTANTE!)
+secrets.json
+config.json  # O cualquier archivo que contenga credenciales
+
+# Compiled source (Python)
+*.pyc
+*.pyo
+__pycache__/
+
+# Packages (Python)
+*.egg
+*.egg-info
+dist
+build
+wheels
+*.whl
+MANIFEST.in
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Firebase emulators
+.firebase/
+!firebase.json # Exclude the main config file
+
+# Cloud Functions for Firebase
+functions/node_modules/
+functions/.runtimeconfig.json
+
+# Serverless framework
+.serverless/
+
+# Docker
+docker-compose.override.yml
