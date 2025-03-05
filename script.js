@@ -1,6 +1,5 @@
 const USUARIO_ADMIN = "admin";
-// const CLAVE_ADMIN = "7531"; // ¡ELIMINADO!  NUNCA GUARDES CONTRASEÑAS EN TEXTO PLANO
-const CLAVE_ADMIN_HASH = "REEMPLAZAR_CON_HASH_SEGURO"; // ¡RECUERDA IMPLEMENTAR HASHING SEGURO!
+const CLAVE_ADMIN = "7531";
 
 document.addEventListener("DOMContentLoaded", function() {
     // Inicializa la sesión al cargar la página
@@ -45,9 +44,7 @@ function iniciarSesion() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    // ¡IMPORTANTE!  Reemplaza esta verificación insegura con una comparación de hash seguro
-    // if (username === USUARIO_ADMIN && password === CLAVE_ADMIN) {
-    if (username === USUARIO_ADMIN && hashPassword(password) === CLAVE_ADMIN_HASH) { // <- ASÍ NO!
+    if (username === USUARIO_ADMIN && password === CLAVE_ADMIN) {
         // Credenciales válidas
         localStorage.setItem('sesionActiva', 'true');
         Swal.fire({
@@ -66,16 +63,6 @@ function iniciarSesion() {
             text: 'Por favor, verifica tu usuario y contraseña.'
         });
     }
-}
-
-// ¡IMPLEMENTA UNA FUNCIÓN DE HASHING SEGURO!
-function hashPassword(password) {
-    // ESTE ES UN EJEMPLO INSEGURO.  ¡NO LO USES EN PRODUCCIÓN!
-    let hash = 0;
-    for (let i = 0; i < password.length; i++) {
-        hash = (hash << 5) - hash + password.charCodeAt(i);
-    }
-    return hash.toString();
 }
 
 function cerrarSesion() {
@@ -362,9 +349,7 @@ function confirmarEliminarCliente(index) {
       const username = result.value.username;
       const password = result.value.password;
 
-      // ¡IMPORTANTE! Reemplaza esta verificación insegura con una comparación de hash
-      // if (username === USUARIO_ADMIN && password === CLAVE_ADMIN) {
-      if (username === USUARIO_ADMIN && hashPassword(password) === CLAVE_ADMIN_HASH) { // <- ASÍ NO!
+      if (username === USUARIO_ADMIN && password === CLAVE_ADMIN) {
         eliminarCliente(index);
       } else {
         Swal.fire({
@@ -400,4 +385,4 @@ function eliminarCliente(index) {
             );
         }
     });
-                }
+        }
