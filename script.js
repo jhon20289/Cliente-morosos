@@ -5,7 +5,7 @@
 // --------------------------------------------------------------------------
 
 // *IMPORTANTE:* Reemplaza con la URL de tu servidor (donde se está ejecutando tu backend)
-const SERVER_URL = 'http://tu-dominio-o-ip:3000';
+const SERVER_URL = 'http://localhost:3000';
 
 // Conexión a Socket.IO
 const socket = io(SERVER_URL);
