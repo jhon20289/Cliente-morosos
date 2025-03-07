@@ -6,6 +6,13 @@ yarn-error.log*
 .pnp
 .pnp.js
 
+# MongoDB (evita subir logs y backups)
+*.log
+mongodb.log
+dump/
+data/
+*.lock
+
 # Environment variables (¡MUY IMPORTANTE!)
 .env
 .env.*
@@ -32,7 +39,7 @@ public/uploads/  # Si tienes una carpeta de subidas que no quieres rastrear
 # Log files
 *.log
 
-# Dependency directories (e.g., for Python)
+# Dependency directories (e.g., para Python)
 env/
 venv/
 .venv/
@@ -63,17 +70,6 @@ MANIFEST.in
 
 # Jupyter Notebook
 .ipynb_checkpoints/
-
-# Firebase emulators
-.firebase/
-!firebase.json # Exclude the main config file
-
-# Cloud Functions for Firebase
-functions/node_modules/
-functions/.runtimeconfig.json
-
-# Serverless framework
-.serverless/
 
 # Docker
 docker-compose.override.yml
