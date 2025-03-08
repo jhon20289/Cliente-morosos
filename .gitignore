@@ -6,22 +6,22 @@ yarn-error.log*
 .pnp
 .pnp.js
 
-# MongoDB (evita subir logs y backups)
+# MongoDB
 *.log
 mongodb.log
 dump/
 data/
 *.lock
 
-# Environment variables (¡MUY IMPORTANTE!)
+# Environment variables
 .env
 .env.*
 !/.env.example
 
-# Build artifacts (dependiendo de tu configuración)
+# Build artifacts
 dist/
 build/
-public/uploads/  # Si tienes una carpeta de subidas que no quieres rastrear
+public/uploads/
 
 # IDEs and Editors
 .idea/
@@ -30,7 +30,7 @@ public/uploads/  # Si tienes una carpeta de subidas que no quieres rastrear
 *.ntvs*
 *.njsproj
 *.sln
-*.swp  # Vim swap files
+*.swp
 *.swo
 
 # macOS
@@ -50,9 +50,9 @@ venv/
 .*.swp
 .DS_Store
 
-# Secret keys (¡MUY IMPORTANTE!)
+# Secret keys
 secrets.json
-config.json  # O cualquier archivo que contenga credenciales
+config.json
 
 # Compiled source (Python)
 *.pyc
@@ -73,3 +73,10 @@ MANIFEST.in
 
 # Docker
 docker-compose.override.yml
+
+# Frontend build artifacts
+dist/
+build/
+
+# Test coverage reports
+coverage/
