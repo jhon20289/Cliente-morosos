@@ -13,12 +13,8 @@
   <div id="login" class="pantalla activo">
     <h2>Iniciar Sesión</h2>
     <form id="loginForm">
-      <input type="text" id="username" placeholder="Usuario" required>
+      <input type="email" id="email" placeholder="Correo electrónico" required>
       <input type="password" id="password" placeholder="Contraseña" required>
-      <select id="role">
-        <option value="user">Usuario</option>
-        <option value="admin">Administrador</option>
-      </select>
       <button type="submit">Entrar</button>
     </form>
   </div>
@@ -38,10 +34,8 @@
       <input type="text" id="nombre" placeholder="Nombre del cliente" required>
       <input type="text" id="cedula" placeholder="Cédula" required>
       <input type="text" id="direccion" placeholder="Dirección" required>
-      <div class="ubicacion-container">
-        <input type="text" id="ubicacion" placeholder="Coordenadas GPS" readonly required>
-        <button type="button" class="btn-ubicacion" onclick="obtenerUbicacion()">Obtener Ubicación</button>
-      </div>
+      <input type="text" id="ubicacion" placeholder="Coordenadas GPS" readonly required>
+      <button type="button" class="btn-ubicacion" onclick="obtenerUbicacion()">Obtener Ubicación</button>
       <input type="tel" id="telefono" placeholder="Teléfono" required>
       <input type="file" id="fotos" multiple accept="image/*">
       <div id="preview"></div>
@@ -53,20 +47,17 @@
   <!-- Pantalla de Lista de Clientes -->
   <div id="lista" class="pantalla">
     <h2>Lista de Clientes Morosos</h2>
-    <input type="text" id="buscarCliente" placeholder="Buscar cliente..." onkeyup="buscarClientes()">
     <div id="listaClientes"></div>
     <button onclick="cambiarPantalla('inicio')">Volver</button>
   </div>
 
-  <!-- Pantalla de Detalles del Cliente -->
-  <div id="detalles" class="pantalla">
-    <h2>Detalles del Cliente</h2>
-    <div id="detalleCliente"></div>
-    <button onclick="cambiarPantalla('lista')">Volver</button>
-  </div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
 
-  <!-- Cargar el script al final del body -->
   <script src="script.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.all.min.js"></script>
+
 </body>
 </html>
