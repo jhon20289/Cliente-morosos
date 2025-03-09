@@ -42,6 +42,12 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
 function cerrarSesion() {
     auth.signOut().then(() => {
         cambiarPantalla('login');
+    }).catch((error) => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al cerrar sesión',
+            text: error.message
+        });
     });
 }
 
@@ -80,7 +86,7 @@ document.getElementById('clienteForm').addEventListener('submit', function(event
 // Cargar Clientes desde Firestore
 function cargarClientes() {
     const listaClientes = document.getElementById("listaClientes");
-    listaClientes.innerHTML = "";
+    listaClientes.innerHTML = "<p>Cargando clientes...</p>";
 
     db.collection("clientes-morosos").orderBy("fechaRegistro", "desc").onSnapshot((querySnapshot) => {
         listaClientes.innerHTML = "";
