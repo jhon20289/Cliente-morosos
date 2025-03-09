@@ -4,13 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clientes Morosos con Geolocalización</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css"> 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.min.css">
 </head>
 <body>
 
+  <!-- Pantalla de Login -->
+  <div id="login" class="pantalla activo">
+    <h2>Iniciar Sesión</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Usuario" required>
+      <input type="password" id="password" placeholder="Contraseña" required>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+
   <!-- Pantalla de Inicio -->
-  <div id="inicio" class="pantalla activo">
+  <div id="inicio" class="pantalla">
     <h2>Sistema de Clientes Morosos</h2>
     <button onclick="cambiarPantalla('registro')">Registrar Cliente</button>
     <button onclick="cambiarPantalla('lista')">Ver Lista de Clientes</button>
@@ -52,7 +62,6 @@
   </div>
 
   <!-- Cargar el script al final del body -->
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="script.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.all.min.js"></script>
 </body>
