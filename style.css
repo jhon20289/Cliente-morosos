@@ -14,7 +14,7 @@ body {
   display: block;
 }
 
-input, button {
+input, button, select {
   padding: 10px;
   font-size: 16px;
   margin: 5px;
@@ -41,7 +41,6 @@ button:hover {
   align-items: center;
 }
 
-/* Botones de acción */
 .btn-detalles {
   background-color: green;
 }
@@ -55,12 +54,6 @@ button:hover {
   background-color: red;
 }
 
-/* Botones de acción más pequeños */
-.btn-detalles, .btn-editar, .btn-eliminar {
-  font-size: 12px;
-  padding: 5px 8px;
-}
-
 .imagen-preview {
   max-width: 150px;
   height: auto;
@@ -69,7 +62,7 @@ button:hover {
   margin: 5px;
 }
 
-#preview {
+#preview, #fotosCliente {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -97,11 +90,4 @@ button:hover {
   text-decoration: underline;
   margin-top: 5px;
   display: inline-block;
-}
-
-#fotosCliente {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 10px 0;
 }
