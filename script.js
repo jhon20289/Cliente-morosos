@@ -1,328 +1,388 @@
-// script.js
+const USUARIO_ADMIN = "admin";
+const CLAVE_ADMIN = "7531";
 
-// --------------------------------------------------------------------------
-// 1. Configuración Inicial
-// --------------------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", function() {
+    // Inicializa la sesión al cargar la página
+    if (estaLogueado()) {
+        cambiarPantalla('inicio'); // Si ya está logueado, muestra la pantalla de inicio
+    } else {
+        cambiarPantalla('login'); // Si no, muestra la pantalla de login
+    }
 
-// *IMPORTANTE:* Reemplaza con la URL de tu servidor (donde se está ejecutando tu backend)
-const SERVER_URL = 'http://localhost:3000';
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        iniciarSesion();
+    });
 
-// Conexión a Socket.IO
-const socket = io(SERVER_URL);
+    document.getElementById('clienteForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        guardarCliente();
+    });
 
-// Elementos del DOM (para evitar buscarlos repetidamente)
-const inicioPantalla = document.getElementById('inicio');
-const registroPantalla = document.getElementById('registro');
-const listaPantalla = document.getElementById('lista');
-const detallesPantalla = document.getElementById('detalles');
-const clienteForm = document.getElementById('clienteForm');
-const listaClientesDiv = document.getElementById('listaClientes');
-const buscarClienteInput = document.getElementById('buscarCliente');
-const ubicacionInput = document.getElementById('ubicacion');
-const previewDiv = document.getElementById('preview');
+    document.getElementById('fotos').addEventListener('change', function(event) {
+        const preview = document.getElementById('preview');
+        preview.innerHTML = '';
+        const files = event.target.files;
+        if (files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.classList.add('imagen-preview');
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    });
 
+    cargarClientes();
+});
 
-// --------------------------------------------------------------------------
-// 2. Funciones para Cambiar entre Pantallas
-// --------------------------------------------------------------------------
+function iniciarSesion() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
 
-function cambiarPantalla(pantallaId) {
-    // Oculta todas las pantallas
-    inicioPantalla.classList.remove('activo');
-    registroPantalla.classList.remove('activo');
-    listaPantalla.classList.remove('activo');
-    detallesPantalla.classList.remove('activo');
-
-    // Muestra la pantalla seleccionada
-    const pantallaSeleccionada = document.getElementById(pantallaId);
-    pantallaSeleccionada.classList.add('activo');
-
-    // Si vamos a la lista, actualizamos la lista de clientes
-    if (pantallaId === 'lista') {
-        obtenerClientes();
+    if (username === USUARIO_ADMIN && password === CLAVE_ADMIN) {
+        // Credenciales válidas
+        localStorage.setItem('sesionActiva', 'true');
+        Swal.fire({
+            icon: 'success',
+            title: 'Inicio de sesión exitoso',
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            cambiarPantalla('inicio');
+        });
+    } else {
+        // Credenciales inválidas
+        Swal.fire({
+            icon: 'error',
+            title: 'Credenciales incorrectas',
+            text: 'Por favor, verifica tu usuario y contraseña.'
+        });
     }
 }
 
-// --------------------------------------------------------------------------
-// 3. Funciones Relacionadas con la Ubicación
-// --------------------------------------------------------------------------
+function cerrarSesion() {
+    localStorage.removeItem('sesionActiva');
+    Swal.fire({
+        icon: 'info',
+        title: 'Sesión cerrada',
+        timer: 1500,
+        showConfirmButton: false
+    }).then(() => {
+        cambiarPantalla('login');
+    });
+}
+
+function estaLogueado() {
+    return localStorage.getItem('sesionActiva') === 'true';
+}
+
+
+function cambiarPantalla(pantalla) {
+    const pantallas = document.querySelectorAll('.pantalla');
+    pantallas.forEach(p => p.classList.remove('activo'));
+    document.getElementById(pantalla).classList.add('activo');
+
+    // Evita acceder a las pantallas protegidas sin estar logueado
+    if (pantalla !== 'login' && pantalla !== 'inicio' && !estaLogueado()) {
+      Swal.fire({
+          icon: 'warning',
+          title: 'Acceso denegado',
+          text: 'Por favor, inicia sesión para acceder a esta sección.'
+      }).then(() => {
+          cambiarPantalla('login');
+      });
+        return;
+    }
+
+    if (pantalla === 'lista') {
+        cargarClientes();
+    }
+}
 
 function obtenerUbicacion() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                ubicacionInput.value = `${lat}, ${lng}`;
-            },
-            (error) => {
-                Swal.fire('Error al obtener la ubicación', error.message, 'error');
+    if (!navigator.geolocation) {
+       Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La geolocalización no es soportada por tu navegador',
+        });
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const coords = position.coords;
+            document.getElementById('ubicacion').value =
+                `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+           Swal.fire({
+                icon: 'success',
+                title: 'Ubicación obtenida',
+                text: 'Ubicación obtenida correctamente',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+        },
+        (error) => {
+            let errorMessage = "Error al obtener la ubicación.";
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = "Permiso denegado para acceder a la ubicación.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = "La información de ubicación no está disponible.";
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = "Tiempo de espera agotado para obtener la ubicación.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    errorMessage = "Ocurrió un error desconocido al obtener la ubicación.";
+                    break;
             }
-        );
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de geolocalización',
+                text: errorMessage,
+            });
+        }
+    );
+}
+
+function guardarCliente() {
+    const nombre = document.getElementById('nombre').value.trim();
+    const cedula = document.getElementById('cedula').value.trim();
+    const direccion = document.getElementById('direccion').value.trim();
+    const ubicacion = document.getElementById('ubicacion').value.trim();
+    const telefono = document.getElementById('telefono').value.trim();
+    const fotosInput = document.getElementById('fotos');
+    const fotos = [];
+
+    if (!nombre || !cedula || !direccion || !ubicacion || !telefono) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Campos incompletos',
+            text: 'Por favor, completa todos los campos.',
+        });
+        return;
+    }
+
+    // Simple validation for cedula and telefono (you can improve these)
+    if (!/^\d+$/.test(cedula)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cédula inválida',
+            text: 'Por favor, introduce una cédula válida (solo números).',
+        });
+        return;
+    }
+
+    if (!/^\d+$/.test(telefono)) {
+       Swal.fire({
+            icon: 'warning',
+            title: 'Teléfono inválido',
+            text: 'Por favor, introduce un teléfono válido (solo números).',
+        });
+        return;
+    }
+
+    if (fotosInput.files && fotosInput.files.length > 0) {
+        Array.from(fotosInput.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fotos.push(e.target.result);
+                if (fotos.length === fotosInput.files.length) {
+                    guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fotos);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
     } else {
-        Swal.fire('Geolocalización no soportada', 'Tu navegador no soporta la geolocalización.', 'error');
+        guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fotos);
     }
 }
 
-// --------------------------------------------------------------------------
-// 4. Funciones Relacionadas con la Previsualización de Imágenes
-// --------------------------------------------------------------------------
+function guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fotos) {
+    const clienteData = { nombre, cedula, direccion, ubicacion, telefono, fotos };
 
-function previsualizarImagenes() {
-    const archivos = document.getElementById('fotos').files;
-    previewDiv.innerHTML = ''; // Limpia la previsualización anterior
+    let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+    clientes.push(clienteData);
+    localStorage.setItem('clientes', JSON.stringify(clientes));
 
-    for (const archivo of archivos) {
-        if (archivo) {
-            const lector = new FileReader();
-
-            lector.onload = function (e) {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.style.maxWidth = '100px';
-                img.style.marginRight = '5px';
-                previewDiv.appendChild(img);
-            }
-
-            lector.readAsDataURL(archivo);
-        }
-    }
+    Swal.fire({
+        icon: 'success',
+        title: 'Cliente registrado',
+        text: 'Cliente registrado con éxito.',
+        timer: 1500,
+        showConfirmButton: false
+    });
+    document.getElementById('clienteForm').reset();
+    document.getElementById('preview').innerHTML = '';
+    cargarClientes();
+    cambiarPantalla('lista');
 }
 
-// Agrega un event listener al input de tipo file para previsualizar las imágenes
-document.getElementById('fotos').addEventListener('change', previsualizarImagenes);
-
-// --------------------------------------------------------------------------
-// 5. Funciones Relacionadas con la Gestión de Clientes (CRUD)
-// --------------------------------------------------------------------------
-
-// a. Obtener Clientes
-async function obtenerClientes() {
-    try {
-        const response = await fetch(`${SERVER_URL}/clientes`); // Usa SERVER_URL
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const clientes = await response.json();
-        mostrarClientes(clientes);
-    } catch (error) {
-        console.error('Error al obtener los clientes:', error);
-        Swal.fire('Error al obtener los clientes', 'Por favor, inténtalo de nuevo más tarde.', 'error');
-    }
-}
-
-// b. Mostrar Clientes
-function mostrarClientes(clientes) {
-    listaClientesDiv.innerHTML = ''; // Limpia la lista anterior
+function cargarClientes() {
+    const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+    const listaClientes = document.getElementById('listaClientes');
+    listaClientes.innerHTML = '';
 
     if (clientes.length === 0) {
-        listaClientesDiv.textContent = 'No se encontraron clientes.';
-        return;
-    }
-
-    const ul = document.createElement('ul');
-    clientes.forEach(cliente => {
-        const li = document.createElement('li');
-        li.textContent = `${cliente.nombre} - ${cliente.cedula}`;
-        li.addEventListener('click', () => mostrarDetallesCliente(cliente._id)); // Muestra detalles al hacer clic
-        ul.appendChild(li);
-    });
-    listaClientesDiv.appendChild(ul);
-}
-
-// c. Guardar Cliente
-async function guardarCliente(event) {
-    event.preventDefault(); // Evita la recarga de la página
-
-    // Obtiene los valores de los campos del formulario
-    const nombre = document.getElementById('nombre').value;
-    const cedula = document.getElementById('cedula').value;
-    const direccion = document.getElementById('direccion').value;
-    const ubicacion = ubicacionInput.value;
-    const telefono = document.getElementById('telefono').value;
-    const fotosInput = document.getElementById('fotos');
-    const fotos = []; // Aquí almacenaremos las fotos en base64
-
-    //Validación básica (puedes añadir más validaciones)
-    if (!nombre || !cedula || !direccion || !ubicacion || !telefono) {
-        Swal.fire('Error', 'Por favor, completa todos los campos.', 'warning');
-        return;
-    }
-
-    //Procesa las fotos a base64
-    if (fotosInput.files && fotosInput.files.length > 0) {
-        for (let i = 0; i < fotosInput.files.length; i++) {
-            const file = fotosInput.files[i];
-            const base64 = await toBase64(file);
-            fotos.push(base64);
-        }
-    }
-
-
-    try {
-        const response = await fetch(`${SERVER_URL}/clientes`, {  // Usa SERVER_URL
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                nombre,
-                cedula,
-                direccion,
-                ubicacion,
-                telefono,
-                fotos
-            })
+        listaClientes.innerHTML = '<p>No hay clientes registrados.</p>';
+    } else {
+        clientes.forEach((cliente, index) => {
+            const divCliente = document.createElement('div');
+            divCliente.classList.add('cliente');
+            divCliente.innerHTML = `
+                <span>${cliente.nombre}</span>
+                <div>
+                    <button class="btn-detalles" onclick="verDetalles(${index})">Detalles</button>
+                    <button class="btn-editar" onclick="editarCliente(${index})">Editar</button>
+                    <button class="btn-eliminar" onclick="confirmarEliminarCliente(${index})">Eliminar</button>
+                </div>
+            `;
+            listaClientes.appendChild(divCliente);
         });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const nuevoCliente = await response.json();
-        Swal.fire('Cliente guardado!', '', 'success');
-        clienteForm.reset(); // Limpia el formulario
-        previewDiv.innerHTML = ''; // Limpia la previsualización
-        cambiarPantalla('lista'); // Redirige a la lista de clientes
-
-    } catch (error) {
-        console.error('Error al guardar el cliente:', error);
-        Swal.fire('Error al guardar el cliente', 'Por favor, inténtalo de nuevo más tarde.', 'error');
     }
 }
 
-// Función auxiliar para convertir un archivo a base64
-function toBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+function buscarClientes() {
+    const query = document.getElementById('buscarCliente').value.toLowerCase();
+    const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+    const listaClientes = document.getElementById('listaClientes');
+    listaClientes.innerHTML = '';
+
+    const filtered = clientes.filter(cliente => {
+         return cliente.nombre.toLowerCase().includes(query) ||
+                cliente.cedula.toLowerCase().includes(query) ||
+                cliente.direccion.toLowerCase().includes(query) ||
+                cliente.telefono.toLowerCase().includes(query);
     });
+
+    if(filtered.length === 0) {
+        listaClientes.innerHTML = '<p>No se encontraron clientes.</p>';
+    } else {
+        filtered.forEach(cliente => {
+            const originalIndex = clientes.findIndex(c => c.cedula === cliente.cedula && c.nombre === cliente.nombre);
+            const divCliente = document.createElement('div');
+            divCliente.classList.add('cliente');
+            divCliente.innerHTML = `
+                <span>${cliente.nombre}</span>
+                <div>
+                    <button class="btn-detalles" onclick="verDetalles(${originalIndex})">Detalles</button>
+                    <button class="btn-editar" onclick="editarCliente(${originalIndex})">Editar</button>
+                    <button class="btn-eliminar" onclick="confirmarEliminarCliente(${originalIndex})">Eliminar</button>
+                </div>
+            `;
+            listaClientes.appendChild(divCliente);
+        });
+    }
 }
 
-// d. Eliminar Cliente (Ejemplo - adaptalo a tu interfaz)
-async function eliminarCliente(clienteId) {
-    Swal.fire({
+function verDetalles(index) {
+    const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+    const cliente = clientes[index];
+
+    const detalleCliente = document.getElementById('detalleCliente');
+    detalleCliente.innerHTML = `
+        <strong>Nombre:</strong> ${cliente.nombre}<br>
+        <strong>Cédula:</strong> ${cliente.cedula}<br>
+        <strong>Dirección:</strong> ${cliente.direccion}<br>
+        <strong>Ubicación:</strong> <a class="mapa-link" href="https://www.google.com/maps?q=${cliente.ubicacion}" target="_blank">Ver en mapa (${cliente.ubicacion})</a><br>
+        <strong>Teléfono:</strong> ${cliente.telefono}<br>
+        <strong>Fotos:</strong><br>
+        <div id="fotosCliente"></div>
+    `;
+
+    const fotosCliente = document.getElementById('fotosCliente');
+    if (cliente.fotos && cliente.fotos.length > 0) {
+        cliente.fotos.forEach(foto => {
+            const img = document.createElement('img');
+            img.src = foto;
+            img.classList.add('imagen-preview');
+            fotosCliente.appendChild(img);
+        });
+    } else {
+        fotosCliente.innerHTML = '<p>No hay fotos registradas.</p>';
+    }
+
+    cambiarPantalla('detalles');
+}
+
+function editarCliente(index) {
+    const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+    const cliente = clientes[index];
+
+    document.getElementById('nombre').value = cliente.nombre;
+    document.getElementById('cedula').value = cliente.cedula;
+    document.getElementById('direccion').value = cliente.direccion;
+    document.getElementById('ubicacion').value = cliente.ubicacion;
+    document.getElementById('telefono').value = cliente.telefono;
+
+    clientes.splice(index, 1);
+    localStorage.setItem('clientes', JSON.stringify(clientes));
+
+    cambiarPantalla('registro');
+}
+
+function confirmarEliminarCliente(index) {
+  Swal.fire({
+    title: 'Confirmar Eliminación',
+    text: 'Ingrese usuario y contraseña de administrador para confirmar:',
+    html:
+      `<input id="swal-input1" class="swal2-input" placeholder="Usuario">` +
+      `<input id="swal-input2" class="swal2-input" type="password" placeholder="Contraseña">`,
+    focusConfirm: false,
+    preConfirm: () => {
+      const username = document.getElementById('swal-input1').value;
+      const password = document.getElementById('swal-input2').value;
+      if (!username || !password) {
+        Swal.showValidationMessage(`Por favor, ingrese usuario y contraseña.`);
+      }
+      return { username: username, password: password };
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const username = result.value.username;
+      const password = result.value.password;
+
+      if (username === USUARIO_ADMIN && password === CLAVE_ADMIN) {
+        eliminarCliente(index);
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Credenciales de administrador incorrectas.'
+        });
+      }
+    }
+  });
+}
+
+function eliminarCliente(index) {
+    let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+   Swal.fire({
         title: '¿Estás seguro?',
-        text: "¡No podrás revertir esto!",
+        text: `¿Eliminar a "${clientes[index].nombre}"?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, ¡eliminarlo!'
-    }).then(async (result) => {
+        confirmButtonText: 'Sí, eliminar!',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
         if (result.isConfirmed) {
-            try {
-                const response = await fetch(`${SERVER_URL}/clientes/${clienteId}`, {  // Usa SERVER_URL
-                    method: 'DELETE'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                Swal.fire(
-                    '¡Eliminado!',
-                    'El cliente ha sido eliminado.',
-                    'success'
-                );
-                obtenerClientes(); // Refresca la lista
-            } catch (error) {
-                console.error('Error al eliminar el cliente:', error);
-                Swal.fire('Error al eliminar el cliente', 'Por favor, inténtalo de nuevo más tarde.', 'error');
-            }
+            clientes.splice(index, 1);
+            localStorage.setItem('clientes', JSON.stringify(clientes));
+            cargarClientes();
+            Swal.fire(
+                'Eliminado!',
+                'El cliente ha sido eliminado.',
+                'success'
+            );
         }
     });
 }
-
-// e. Mostrar Detalles del Cliente
-async function mostrarDetallesCliente(clienteId) {
-    try {
-        const response = await fetch(`${SERVER_URL}/clientes/${clienteId}`);  // Usa SERVER_URL
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const cliente = await response.json();
-
-        const detalleClienteDiv = document.getElementById('detalleCliente');
-        detalleClienteDiv.innerHTML = `
-            <h3>${cliente.nombre}</h3>
-            <p>Cédula: ${cliente.cedula}</p>
-            <p>Dirección: ${cliente.direccion}</p>
-            <p>Ubicación: ${cliente.ubicacion}</p>
-            <p>Teléfono: ${cliente.telefono}</p>
-            
-            <h4>Fotos:</h4>
-            <div id="fotosCliente"></div>
-            <button onclick="eliminarCliente('${cliente._id}')">Eliminar Cliente</button>
-        `;
-
-        const fotosClienteDiv = document.getElementById('fotosCliente');
-        if (cliente.fotos && cliente.fotos.length > 0) {
-            cliente.fotos.forEach(foto => {
-                const img = document.createElement('img');
-                img.src = foto;
-                img.style.maxWidth = '150px';
-                img.style.marginRight = '5px';
-                fotosClienteDiv.appendChild(img);
-            });
-        } else {
-            fotosClienteDiv.textContent = 'No hay fotos disponibles.';
-        }
-
-        cambiarPantalla('detalles');
-
-    } catch (error) {
-        console.error('Error al obtener los detalles del cliente:', error);
-        Swal.fire('Error al obtener los detalles del cliente', 'Por favor, inténtalo de nuevo más tarde.', 'error');
-    }
-}
-
-// --------------------------------------------------------------------------
-// 6. Funciones Relacionadas con la Búsqueda de Clientes
-// --------------------------------------------------------------------------
-
-function buscarClientes() {
-    const searchTerm = buscarClienteInput.value.toLowerCase();
-    // Aquí puedes implementar la lógica de búsqueda en el frontend
-    // O puedes hacer una petición al backend para buscar los clientes
-    // y luego actualizar la lista.
-    console.log("Buscando:", searchTerm); //Solo para pruebas
-    //Ejemplo:  obtenerClientes(`?q=${searchTerm}`); //Pasar el parametro al backend
-}
-
-// --------------------------------------------------------------------------
-// 7. Funciones Relacionadas con Socket.IO (Tiempo Real)
-// --------------------------------------------------------------------------
-
-socket.on('clienteCreado', (nuevoCliente) => {
-    console.log('Nuevo cliente creado (Socket):', nuevoCliente);
-    Swal.fire('Nuevo cliente creado!', nuevoCliente.nombre, 'info'); //Opcional
-    obtenerClientes(); // Refresca la lista
-});
-
-socket.on('clienteEliminado', (clienteId) => {
-    console.log('Cliente eliminado (Socket):', clienteId);
-    Swal.fire('Cliente eliminado!',  'El cliente ha sido eliminado', 'info'); //Opcional
-    obtenerClientes(); // Refresca la lista
-});
-
-
-// --------------------------------------------------------------------------
-// 8. Event Listeners y Carga Inicial
-// --------------------------------------------------------------------------
-
-// Agrega un event listener al formulario para guardar un cliente
-clienteForm.addEventListener('submit', guardarCliente);
-
-// Agrega un event listener al input de búsqueda (opcional - si la búsqueda es en tiempo real)
-//buscarClienteInput.addEventListener('keyup', buscarClientes);
-
-// Carga la lista de clientes al cargar la página (si la pantalla de lista es la activa por defecto)
-//window.onload = obtenerClientes;
-
-//Opcional:  Mostrar la pantalla de inicio al cargar la página
-window.onload = function() {
-    cambiarPantalla('inicio');
-};
