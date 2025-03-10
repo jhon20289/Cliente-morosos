@@ -1,9 +1,10 @@
-// Cargar Supabase
+// Inicializar Supabase
 const { createClient } = supabase;
-const SUPABASE_URL = "https://crptdhbzvwwghyzttwge.supabase.co"; // Reemplaza con tu URL
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI..."; // Reemplaza con tu clave API
+const SUPABASE_URL = "https://crptdhbzvwwghyzttwge.supabase.co"; // Reemplaza con tu URL de Supabase
+const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY"; // Reemplaza con tu clave API
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Verificar sesión
 document.addEventListener("DOMContentLoaded", function() {
     if (estaLogueado()) {
         cambiarPantalla('inicio');
@@ -24,6 +25,7 @@ document.addEventListener("DOMContentLoaded", function() {
     cargarClientes();
 });
 
+// Iniciar sesión
 async function iniciarSesion() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
@@ -38,37 +40,26 @@ async function iniciarSesion() {
     if (data) {
         localStorage.setItem("sesionActiva", "true");
         localStorage.setItem("role", data.role);
-
-        Swal.fire({
-            icon: 'success',
-            title: 'Inicio de sesión exitoso',
-            timer: 1500,
-            showConfirmButton: false
-        }).then(() => cambiarPantalla('inicio'));
+        Swal.fire('Inicio de sesión exitoso', '', 'success');
+        cambiarPantalla('inicio');
     } else {
-        Swal.fire({
-            icon: 'error',
-            title: 'Credenciales incorrectas',
-            text: 'Por favor, verifica tu usuario y contraseña.'
-        });
+        Swal.fire('Error', 'Usuario o contraseña incorrectos', 'error');
     }
 }
 
+// Cerrar sesión
 function cerrarSesion() {
-    localStorage.removeItem('sesionActiva');
-    localStorage.removeItem('role');
-    Swal.fire({
-        icon: 'info',
-        title: 'Sesión cerrada',
-        timer: 1500,
-        showConfirmButton: false
-    }).then(() => cambiarPantalla('login'));
+    localStorage.clear();
+    Swal.fire('Sesión cerrada', '', 'info');
+    cambiarPantalla('login');
 }
 
+// Verificar si el usuario está logueado
 function estaLogueado() {
     return localStorage.getItem('sesionActiva') === 'true';
 }
 
+// Guardar cliente en Supabase
 async function guardarCliente() {
     const nombre = document.getElementById('nombre').value.trim();
     const cedula = document.getElementById('cedula').value.trim();
@@ -78,7 +69,7 @@ async function guardarCliente() {
     const fotosInput = document.getElementById('fotos');
 
     if (!nombre || !cedula || !direccion || !ubicacion || !telefono) {
-        Swal.fire({ icon: 'warning', title: 'Campos incompletos', text: 'Completa todos los campos.' });
+        Swal.fire('Completa todos los campos', '', 'warning');
         return;
     }
 
@@ -87,20 +78,21 @@ async function guardarCliente() {
         fotos = await subirImagenes(fotosInput.files);
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from("clientes_morosos")
         .insert([{ nombre, cedula, direccion, ubicacion, telefono, foto1: fotos[0] || null }]);
 
     if (error) {
-        Swal.fire({ icon: 'error', title: 'Error al registrar', text: error.message });
+        Swal.fire('Error al registrar', error.message, 'error');
     } else {
-        Swal.fire({ icon: 'success', title: 'Cliente registrado', timer: 1500, showConfirmButton: false });
+        Swal.fire('Cliente registrado', '', 'success');
         document.getElementById('clienteForm').reset();
         cargarClientes();
         cambiarPantalla('lista');
     }
 }
 
+// Subir imágenes a Supabase Storage
 async function subirImagenes(files) {
     let urls = [];
     for (let file of files) {
@@ -117,6 +109,7 @@ async function subirImagenes(files) {
     return urls;
 }
 
+// Cargar lista de clientes
 async function cargarClientes() {
     const { data, error } = await supabase
         .from("clientes_morosos")
@@ -130,64 +123,18 @@ async function cargarClientes() {
         return;
     }
 
-    data.forEach((cliente, index) => {
-        const divCliente = document.createElement('div');
-        divCliente.classList.add('cliente');
-        divCliente.innerHTML = `
-            <span>${cliente.nombre}</span>
-            <div>
-                <button class="btn-detalles" onclick="verDetalles(${index})">Detalles</button>
-                ${localStorage.getItem('role') === 'admin' ? `
-                <button class="btn-editar" onclick="editarCliente(${index})">Editar</button>
-                <button class="btn-eliminar" onclick="eliminarCliente(${cliente.id})">Eliminar</button>
-                ` : ''}
+    data.forEach(cliente => {
+        listaClientes.innerHTML += `
+            <div class="cliente">
+                <span>${cliente.nombre}</span>
+                <button onclick="verDetalles(${cliente.id})">Detalles</button>
             </div>
         `;
-        listaClientes.appendChild(divCliente);
     });
 }
 
-async function eliminarCliente(clienteId) {
-    let { error } = await supabase
-        .from("clientes_morosos")
-        .delete()
-        .eq("id", clienteId);
-
-    if (error) {
-        Swal.fire({ icon: 'error', title: 'Error al eliminar', text: error.message });
-    } else {
-        Swal.fire({ icon: 'success', title: 'Cliente eliminado', timer: 1500, showConfirmButton: false });
-        cargarClientes();
-    }
-}
-
-async function verDetalles(index) {
-    const { data, error } = await supabase
-        .from("clientes_morosos")
-        .select("*")
-        .eq("id", index)
-        .single();
-
-    if (!data) return;
-
-    const detalleCliente = document.getElementById('detalleCliente');
-    detalleCliente.innerHTML = `
-        <strong>Nombre:</strong> ${data.nombre}<br>
-        <strong>Cédula:</strong> ${data.cedula}<br>
-        <strong>Dirección:</strong> ${data.direccion}<br>
-        <strong>Ubicación:</strong> <a class="mapa-link" href="https://www.google.com/maps?q=${data.ubicacion}" target="_blank">Ver en mapa (${data.ubicacion})</a><br>
-        <strong>Teléfono:</strong> ${data.telefono}<br>
-        <strong>Fotos:</strong><br>
-        <div id="fotosCliente"></div>
-    `;
-
-    const fotosCliente = document.getElementById('fotosCliente');
-    if (data.foto1) {
-        const img = document.createElement('img');
-        img.src = data.foto1;
-        img.classList.add('imagen-preview');
-        fotosCliente.appendChild(img);
-    }
-
-    cambiarPantalla('detalles');
+// Cambiar de pantalla
+function cambiarPantalla(pantalla) {
+    document.querySelectorAll('.pantalla').forEach(div => div.classList.remove('activo'));
+    document.getElementById(pantalla).classList.add('activo');
 }
