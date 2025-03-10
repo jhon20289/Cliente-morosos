@@ -1,10 +1,11 @@
 // Inicializar Supabase
 const { createClient } = supabase;
-const SUPABASE_URL = "https://crptdhbzvwwghyzttwge.supabase.co"; // Reemplaza con tu URL de Supabase
-const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY"; // Reemplaza con tu clave API
+const SUPABASE_URL = "https://crptdhbzvwwghyzttwge.supabase.co"; // URL de tu Supabase
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI..."; // Reemplaza con tu clave API ANON
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Verificar sesión
+// Verificar sesión al cargar la página
 document.addEventListener("DOMContentLoaded", function() {
     if (estaLogueado()) {
         cambiarPantalla('inicio');
@@ -66,21 +67,15 @@ async function guardarCliente() {
     const direccion = document.getElementById('direccion').value.trim();
     const ubicacion = document.getElementById('ubicacion').value.trim();
     const telefono = document.getElementById('telefono').value.trim();
-    const fotosInput = document.getElementById('fotos');
 
     if (!nombre || !cedula || !direccion || !ubicacion || !telefono) {
         Swal.fire('Completa todos los campos', '', 'warning');
         return;
     }
 
-    let fotos = [];
-    if (fotosInput.files.length > 0) {
-        fotos = await subirImagenes(fotosInput.files);
-    }
-
     const { error } = await supabase
         .from("clientes_morosos")
-        .insert([{ nombre, cedula, direccion, ubicacion, telefono, foto1: fotos[0] || null }]);
+        .insert([{ nombre, cedula, direccion, ubicacion, telefono }]);
 
     if (error) {
         Swal.fire('Error al registrar', error.message, 'error');
@@ -90,23 +85,6 @@ async function guardarCliente() {
         cargarClientes();
         cambiarPantalla('lista');
     }
-}
-
-// Subir imágenes a Supabase Storage
-async function subirImagenes(files) {
-    let urls = [];
-    for (let file of files) {
-        const filePath = `clientes/${file.name}`;
-        let { data, error } = await supabase.storage
-            .from("imagenes")
-            .upload(filePath, file);
-
-        if (data) {
-            let { publicURL } = supabase.storage.from("imagenes").getPublicUrl(filePath);
-            urls.push(publicURL);
-        }
-    }
-    return urls;
 }
 
 // Cargar lista de clientes
