@@ -1,7 +1,8 @@
-const USUARIO_ADMIN = "admin";
-const CLAVE_ADMIN = "7531";
-const USUARIO_USER = "user";
-const CLAVE_USER = "1234";
+// Cargar Supabase
+const { createClient } = supabase;
+const SUPABASE_URL = "https://crptdhbzvwwghyzttwge.supabase.co"; // Reemplaza con tu URL
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI..."; // Reemplaza con tu clave API
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", function() {
     if (estaLogueado()) {
@@ -10,54 +11,40 @@ document.addEventListener("DOMContentLoaded", function() {
         cambiarPantalla('login');
     }
 
-    document.getElementById('loginForm').addEventListener('submit', function(event) {
+    document.getElementById('loginForm').addEventListener('submit', async function(event) {
         event.preventDefault();
-        iniciarSesion();
+        await iniciarSesion();
     });
 
-    document.getElementById('clienteForm').addEventListener('submit', function(event) {
+    document.getElementById('clienteForm').addEventListener('submit', async function(event) {
         event.preventDefault();
-        guardarCliente();
-    });
-
-    document.getElementById('fotos').addEventListener('change', function(event) {
-        const preview = document.getElementById('preview');
-        preview.innerHTML = '';
-        const files = event.target.files;
-        if (files) {
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.classList.add('imagen-preview');
-                    preview.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
+        await guardarCliente();
     });
 
     cargarClientes();
 });
 
-function iniciarSesion() {
+async function iniciarSesion() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    const role = document.getElementById('role').value;
 
-    if ((username === USUARIO_ADMIN && password === CLAVE_ADMIN && role === "admin") ||
-        (username === USUARIO_USER && password === CLAVE_USER && role === "user")) {
-        localStorage.setItem('sesionActiva', 'true');
-        localStorage.setItem('role', role);
+    let { data, error } = await supabase
+        .from("usuarios")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password)
+        .single();
+
+    if (data) {
+        localStorage.setItem("sesionActiva", "true");
+        localStorage.setItem("role", data.role);
+
         Swal.fire({
             icon: 'success',
             title: 'Inicio de sesión exitoso',
             timer: 1500,
             showConfirmButton: false
-        }).then(() => {
-            cambiarPantalla('inicio');
-        });
+        }).then(() => cambiarPantalla('inicio'));
     } else {
         Swal.fire({
             icon: 'error',
@@ -75,331 +62,132 @@ function cerrarSesion() {
         title: 'Sesión cerrada',
         timer: 1500,
         showConfirmButton: false
-    }).then(() => {
-        cambiarPantalla('login');
-    });
+    }).then(() => cambiarPantalla('login'));
 }
 
 function estaLogueado() {
     return localStorage.getItem('sesionActiva') === 'true';
 }
 
-function cambiarPantalla(pantalla) {
-    const pantallas = document.querySelectorAll('.pantalla');
-    pantallas.forEach(p => p.classList.remove('activo'));
-    document.getElementById(pantalla).classList.add('activo');
-
-    const role = localStorage.getItem('role');
-
-    if (pantalla !== 'login' && pantalla !== 'inicio' && !estaLogueado()) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Acceso denegado',
-            text: 'Por favor, inicia sesión para acceder a esta sección.'
-        }).then(() => {
-            cambiarPantalla('login');
-        });
-        return;
-    }
-
-    if (pantalla === 'registro' && role !== 'admin') {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Acceso denegado',
-            text: 'Solo los administradores pueden registrar clientes.'
-        }).then(() => {
-            cambiarPantalla('inicio');
-        });
-        return;
-    }
-
-    if (pantalla === 'lista') {
-        cargarClientes();
-    }
-}
-
-function obtenerUbicacion() {
-    if (!navigator.geolocation) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'La geolocalización no es soportada por tu navegador.',
-        });
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const coords = position.coords;
-            document.getElementById('ubicacion').value =
-                `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
-            Swal.fire({
-                icon: 'success',
-                title: 'Ubicación obtenida',
-                text: 'Ubicación obtenida correctamente',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        },
-        (error) => {
-            let errorMessage = "Error al obtener la ubicación.";
-            switch (error.code) {
-                case error.PERMISSION_DENIED:
-                    errorMessage = "Permiso denegado para acceder a la ubicación.";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    errorMessage = "La información de ubicación no está disponible.";
-                    break;
-                case error.TIMEOUT:
-                    errorMessage = "Tiempo de espera agotado para obtener la ubicación.";
-                    break;
-                case error.UNKNOWN_ERROR:
-                    errorMessage = "Ocurrió un error desconocido al obtener la ubicación.";
-                    break;
-            }
-            Swal.fire({
-                icon: 'error',
-                title: 'Error de geolocalización',
-                text: errorMessage,
-            });
-        }
-    );
-}
-
-function guardarCliente() {
+async function guardarCliente() {
     const nombre = document.getElementById('nombre').value.trim();
     const cedula = document.getElementById('cedula').value.trim();
     const direccion = document.getElementById('direccion').value.trim();
     const ubicacion = document.getElementById('ubicacion').value.trim();
     const telefono = document.getElementById('telefono').value.trim();
     const fotosInput = document.getElementById('fotos');
-    const fotos = [];
 
     if (!nombre || !cedula || !direccion || !ubicacion || !telefono) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Campos incompletos',
-            text: 'Por favor, completa todos los campos.',
-        });
+        Swal.fire({ icon: 'warning', title: 'Campos incompletos', text: 'Completa todos los campos.' });
         return;
     }
 
-    if (!/^\d+$/.test(cedula)) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Cédula inválida',
-            text: 'Por favor, introduce una cédula válida (solo números).',
-        });
-        return;
+    let fotos = [];
+    if (fotosInput.files.length > 0) {
+        fotos = await subirImagenes(fotosInput.files);
     }
 
-    if (!/^\d+$/.test(telefono)) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Teléfono inválido',
-            text: 'Por favor, introduce un teléfono válido (solo números).',
-        });
-        return;
-    }
+    const { data, error } = await supabase
+        .from("clientes_morosos")
+        .insert([{ nombre, cedula, direccion, ubicacion, telefono, foto1: fotos[0] || null }]);
 
-    if (fotosInput.files && fotosInput.files.length > 0) {
-        Array.from(fotosInput.files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                fotos.push(e.target.result);
-                if (fotos.length === fotosInput.files.length) {
-                    guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fotos);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+    if (error) {
+        Swal.fire({ icon: 'error', title: 'Error al registrar', text: error.message });
     } else {
-        guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fotos);
+        Swal.fire({ icon: 'success', title: 'Cliente registrado', timer: 1500, showConfirmButton: false });
+        document.getElementById('clienteForm').reset();
+        cargarClientes();
+        cambiarPantalla('lista');
     }
 }
 
-function guardarClienteFinal(nombre, cedula, direccion, ubicacion, telefono, fotos) {
-    const clienteData = { nombre, cedula, direccion, ubicacion, telefono, fotos };
+async function subirImagenes(files) {
+    let urls = [];
+    for (let file of files) {
+        const filePath = `clientes/${file.name}`;
+        let { data, error } = await supabase.storage
+            .from("imagenes")
+            .upload(filePath, file);
 
-    let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
-    clientes.push(clienteData);
-    localStorage.setItem('clientes', JSON.stringify(clientes));
-
-    Swal.fire({
-        icon: 'success',
-        title: 'Cliente registrado',
-        text: 'Cliente registrado con éxito.',
-        timer: 1500,
-        showConfirmButton: false
-    });
-    document.getElementById('clienteForm').reset();
-    document.getElementById('preview').innerHTML = '';
-    cargarClientes();
-    cambiarPantalla('lista');
+        if (data) {
+            let { publicURL } = supabase.storage.from("imagenes").getPublicUrl(filePath);
+            urls.push(publicURL);
+        }
+    }
+    return urls;
 }
 
-function cargarClientes() {
-    const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+async function cargarClientes() {
+    const { data, error } = await supabase
+        .from("clientes_morosos")
+        .select("*");
+
     const listaClientes = document.getElementById('listaClientes');
     listaClientes.innerHTML = '';
 
-    if (clientes.length === 0) {
+    if (error || data.length === 0) {
         listaClientes.innerHTML = '<p>No hay clientes registrados.</p>';
-    } else {
-        clientes.forEach((cliente, index) => {
-            const divCliente = document.createElement('div');
-            divCliente.classList.add('cliente');
-            divCliente.innerHTML = `
-                <span>${cliente.nombre}</span>
-                <div>
-                    <button class="btn-detalles" onclick="verDetalles(${index})">Detalles</button>
-                    ${localStorage.getItem('role') === 'admin' ? `
-                    <button class="btn-editar" onclick="editarCliente(${index})">Editar</button>
-                    <button class="btn-eliminar" onclick="confirmarEliminarCliente(${index})">Eliminar</button>
-                    ` : ''}
-                </div>
-            `;
-            listaClientes.appendChild(divCliente);
-        });
+        return;
     }
-}
 
-function buscarClientes() {
-    const query = document.getElementById('buscarCliente').value.toLowerCase();
-    const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
-    const listaClientes = document.getElementById('listaClientes');
-    listaClientes.innerHTML = '';
-
-    const filtered = clientes.filter(cliente => {
-         return cliente.nombre.toLowerCase().includes(query) ||
-                cliente.cedula.toLowerCase().includes(query) ||
-                cliente.direccion.toLowerCase().includes(query) ||
-                cliente.telefono.toLowerCase().includes(query);
+    data.forEach((cliente, index) => {
+        const divCliente = document.createElement('div');
+        divCliente.classList.add('cliente');
+        divCliente.innerHTML = `
+            <span>${cliente.nombre}</span>
+            <div>
+                <button class="btn-detalles" onclick="verDetalles(${index})">Detalles</button>
+                ${localStorage.getItem('role') === 'admin' ? `
+                <button class="btn-editar" onclick="editarCliente(${index})">Editar</button>
+                <button class="btn-eliminar" onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+                ` : ''}
+            </div>
+        `;
+        listaClientes.appendChild(divCliente);
     });
+}
 
-    if(filtered.length === 0) {
-        listaClientes.innerHTML = '<p>No se encontraron clientes.</p>';
+async function eliminarCliente(clienteId) {
+    let { error } = await supabase
+        .from("clientes_morosos")
+        .delete()
+        .eq("id", clienteId);
+
+    if (error) {
+        Swal.fire({ icon: 'error', title: 'Error al eliminar', text: error.message });
     } else {
-        filtered.forEach(cliente => {
-            const originalIndex = clientes.findIndex(c => c.cedula === cliente.cedula && c.nombre === cliente.nombre);
-            const divCliente = document.createElement('div');
-            divCliente.classList.add('cliente');
-            divCliente.innerHTML = `
-                <span>${cliente.nombre}</span>
-                <div>
-                    <button class="btn-detalles" onclick="verDetalles(${originalIndex})">Detalles</button>
-                    ${localStorage.getItem('role') === 'admin' ? `
-                    <button class="btn-editar" onclick="editarCliente(${originalIndex})">Editar</button>
-                    <button class="btn-eliminar" onclick="confirmarEliminarCliente(${originalIndex})">Eliminar</button>
-                    ` : ''}
-                </div>
-            `;
-            listaClientes.appendChild(divCliente);
-        });
+        Swal.fire({ icon: 'success', title: 'Cliente eliminado', timer: 1500, showConfirmButton: false });
+        cargarClientes();
     }
 }
 
-function verDetalles(index) {
-    const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
-    const cliente = clientes[index];
+async function verDetalles(index) {
+    const { data, error } = await supabase
+        .from("clientes_morosos")
+        .select("*")
+        .eq("id", index)
+        .single();
+
+    if (!data) return;
 
     const detalleCliente = document.getElementById('detalleCliente');
     detalleCliente.innerHTML = `
-        <strong>Nombre:</strong> ${cliente.nombre}<br>
-        <strong>Cédula:</strong> ${cliente.cedula}<br>
-        <strong>Dirección:</strong> ${cliente.direccion}<br>
-        <strong>Ubicación:</strong> <a class="mapa-link" href="https://www.google.com/maps?q=${cliente.ubicacion}" target="_blank">Ver en mapa (${cliente.ubicacion})</a><br>
-        <strong>Teléfono:</strong> ${cliente.telefono}<br>
+        <strong>Nombre:</strong> ${data.nombre}<br>
+        <strong>Cédula:</strong> ${data.cedula}<br>
+        <strong>Dirección:</strong> ${data.direccion}<br>
+        <strong>Ubicación:</strong> <a class="mapa-link" href="https://www.google.com/maps?q=${data.ubicacion}" target="_blank">Ver en mapa (${data.ubicacion})</a><br>
+        <strong>Teléfono:</strong> ${data.telefono}<br>
         <strong>Fotos:</strong><br>
         <div id="fotosCliente"></div>
     `;
 
     const fotosCliente = document.getElementById('fotosCliente');
-    if (cliente.fotos && cliente.fotos.length > 0) {
-        cliente.fotos.forEach(foto => {
-            const img = document.createElement('img');
-            img.src = foto;
-            img.classList.add('imagen-preview');
-            fotosCliente.appendChild(img);
-        });
-    } else {
-        fotosCliente.innerHTML = '<p>No hay fotos registradas.</p>';
+    if (data.foto1) {
+        const img = document.createElement('img');
+        img.src = data.foto1;
+        img.classList.add('imagen-preview');
+        fotosCliente.appendChild(img);
     }
 
     cambiarPantalla('detalles');
-}
-
-function editarCliente(index) {
-    const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
-    const cliente = clientes[index];
-
-    document.getElementById('nombre').value = cliente.nombre;
-    document.getElementById('cedula').value = cliente.cedula;
-    document.getElementById('direccion').value = cliente.direccion;
-    document.getElementById('ubicacion').value = cliente.ubicacion;
-    document.getElementById('telefono').value = cliente.telefono;
-
-    clientes.splice(index, 1);
-    localStorage.setItem('clientes', JSON.stringify(clientes));
-
-    cambiarPantalla('registro');
-}
-
-function confirmarEliminarCliente(index) {
-  Swal.fire({
-    title: 'Confirmar Eliminación',
-    text: 'Ingrese usuario y contraseña de administrador para confirmar:',
-    html:
-      `<input id="swal-input1" class="swal2-input" placeholder="Usuario">` +
-      `<input id="swal-input2" class="swal2-input" type="password" placeholder="Contraseña">`,
-    focusConfirm: false,
-    preConfirm: () => {
-      const username = document.getElementById('swal-input1').value;
-      const password = document.getElementById('swal-input2').value;
-      if (!username || !password) {
-        Swal.showValidationMessage(`Por favor, ingrese usuario y contraseña.`);
-      }
-      return { username: username, password: password };
-    }
-  }).then((result) => {
-    if (result.isConfirmed) {
-      const username = result.value.username;
-      const password = result.value.password;
-
-      if (username === USUARIO_ADMIN && password === CLAVE_ADMIN) {
-        eliminarCliente(index);
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Credenciales de administrador incorrectas.'
-        });
-      }
-    }
-  });
-}
-
-function eliminarCliente(index) {
-    let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
-    Swal.fire({
-        title: '¿Estás seguro?',
-        text: `¿Eliminar a "${clientes[index].nombre}"?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, eliminar!',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            clientes.splice(index, 1);
-            localStorage.setItem('clientes', JSON.stringify(clientes));
-            cargarClientes();
-            Swal.fire(
-                'Eliminado!',
-                'El cliente ha sido eliminado.',
-                'success'
-            );
-        }
-    });
 }
