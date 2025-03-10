@@ -1,7 +1,7 @@
 // Inicializar Supabase
 const { createClient } = supabase;
 const SUPABASE_URL = "https://crptdhbzvwwghyzttwge.supabase.co"; // URL de tu Supabase
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI..."; // Reemplaza con tu clave API ANON
+const SUPABASE_ANON_KEY = "ÑeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNycHRkaGJ6dnd3Z2h5enR0d2dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1NzU3OTgsImV4cCI6MjA1NzE1MTc5OH0.AxMYrRTrTTOV9BREMKLV0B0qRJGvcveFFQ7TCO8GCjE"; // Clave API ANON
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
