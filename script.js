@@ -12,20 +12,9 @@
   </style>
 </head>
 <body>
-  <!-- Pantalla de Login -->
-  <div id="login" class="pantalla">
-    <h2>Iniciar Sesión</h2>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Usuario" required>
-      <input type="password" id="password" placeholder="Contraseña" required>
-      <button type="submit">Entrar</button>
-    </form>
-  </div>
-
   <!-- Pantalla de Inicio -->
-  <div id="inicio" class="pantalla">
+  <div id="inicio" class="pantalla activo">
     <h2>Bienvenido</h2>
-    <button onclick="cerrarSesion()">Cerrar Sesión</button>
     <button onclick="cambiarPantalla('cliente')">Registrar Cliente</button>
     <button onclick="cambiarPantalla('lista')">Ver Clientes</button>
   </div>
@@ -60,19 +49,8 @@
     const { createClient } = supabase;
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Verificar sesión al cargar la página
+    // Cargar clientes al iniciar la página
     document.addEventListener("DOMContentLoaded", function() {
-      if (estaLogueado()) {
-          cambiarPantalla('inicio');
-      } else {
-          cambiarPantalla('login');
-      }
-
-      document.getElementById('loginForm').addEventListener('submit', async function(event) {
-          event.preventDefault();
-          await iniciarSesion();
-      });
-
       document.getElementById('clienteForm').addEventListener('submit', async function(event) {
           event.preventDefault();
           await guardarCliente();
@@ -80,40 +58,6 @@
 
       cargarClientes();
     });
-
-    // Iniciar sesión
-    async function iniciarSesion() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-
-      let { data, error } = await supabaseClient
-          .from("usuarios")
-          .select("*")
-          .eq("username", username)
-          .eq("password", password)
-          .single();
-
-      if (data) {
-          localStorage.setItem("sesionActiva", "true");
-          localStorage.setItem("role", data.role);
-          Swal.fire('Inicio de sesión exitoso', '', 'success');
-          cambiarPantalla('inicio');
-      } else {
-          Swal.fire('Error', 'Usuario o contraseña incorrectos', 'error');
-      }
-    }
-
-    // Cerrar sesión
-    function cerrarSesion() {
-      localStorage.clear();
-      Swal.fire('Sesión cerrada', '', 'info');
-      cambiarPantalla('login');
-    }
-
-    // Verificar si el usuario está logueado
-    function estaLogueado() {
-      return localStorage.getItem('sesionActiva') === 'true';
-    }
 
     // Guardar cliente en Supabase
     async function guardarCliente() {
